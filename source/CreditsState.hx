@@ -14,6 +14,7 @@ import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 #if MODS_ALLOWED
 import sys.FileSystem;
+import sys.io.File;
 #end
 import lime.utils.Assets;
 
@@ -21,11 +22,11 @@ using StringTools;
 
 class CreditsState extends MusicBeatState
 {
-	var curSelected:Int = 1;
+	var curSelected:Int = -1;
 
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private var iconArray:Array<AttachedSprite> = [];
-	private var creditsStuff:Array<Dynamic> = [];
+	private var creditsStuff:Array<Array<String>> = [];
 
 	var bg:FlxSprite;
 	var descText:FlxText;
@@ -45,26 +46,37 @@ class CreditsState extends MusicBeatState
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
 
-		var pisspoop = [ //Name - Icon name - Description - Link - BG Color
-			['Psych Engine Android Port'],
-			['M.A. Jigsaw',		    'majigsaw',		    'Main Coder of The Port',	 'https://www.youtube.com/channel/UC2Sk7vtPzOvbVzdVTWrribQ',	'0xFFC30085'],
-			['Psych Engine Team'],
-			['Shadow Mario',		'shadowmario',		'Main Programmer of Psych Engine',					'https://twitter.com/Shadow_Mario_',	'0xFFFFDD33'],
-			['RiverOaken',			'riveroaken',		'Main Artist/Animator of Psych Engine',				'https://twitter.com/river_oaken',		'0xFFC30085'],
+		#if MODS_ALLOWED
+		//trace("finding mod shit");
+		for (folder in Paths.getModDirectories())
+		{
+			var creditsFile:String = Paths.mods(folder + '/data/credits.txt');
+			if (FileSystem.exists(creditsFile))
+			{
+				var firstarray:Array<String> = File.getContent(creditsFile).split('\n');
+				for(i in firstarray)
+				{
+					var arr:Array<String> = i.replace('\\n', '\n').split("::");
+					if(arr.length >= 5) arr.push(folder);
+					creditsStuff.push(arr);
+				}
+				creditsStuff.push(['']);
+			}
+		}
+		#end
+
+		var pisspoop:Array<Array<String>> = [ //Name - Icon name - Description - Link - BG Color
 			[''],
-			['Engine Contributors'],
-			['shubs',				'shubs',			'New Input System Programmer',						'https://twitter.com/yoshubs',			'0xFF4494E6'],
-			['PolybiusProxy',		'polybiusproxy',	'.MP4 Video Loader Extension',						'https://twitter.com/polybiusproxy',	'0xFFE01F32'],
-			['gedehari',			'gedehari',			'Chart Editor\'s Sound Waveform base',				'https://twitter.com/gedehari',			'0xFFFF9300'],
-			['Keoiki',				'keoiki',			'Note Splash Animations',							'https://twitter.com/Keoiki_',			'0xFFFFFFFF'],
-			['SandPlanet',			'sandplanet',		'Mascot\'s Owner\nMain Supporter of the Engine',		'https://twitter.com/SandPlanetNG',	'0xFFD10616'],
-			['bubba',				'bubba',		'Guest Composer for "Hot Dilf"',	'https://www.youtube.com/channel/UCxQTnLmv0OAS63yzk9pVfaw',	'0xFF61536A'],
+			['Plus Engine Team'],
+			['Speky',		'speky',		'Main Programmer and Artist of Plus Engine',						'https://www.youtube.com/channel/UC5eRTSerDjVEnwyg-OYyYjg',	'FFDD33'],
+			['Ericko',			'ericko',		'Additional Programmer of Plus Engine',					'https://www.youtube.com/channel/UCsFehO9Np6EHqIb635YAYLA',		'C30085'],
+			['Infrnk',			'infrnk',			'Additional Artist of Plus Engine',				'https://www.youtube.com/channel/UCY-6lrL-DHdKuZ-5u0lkVVg/about',			'389A58'],
 			[''],
-			["Funkin' Crew"],
-			['ninjamuffin99',		'ninjamuffin99',	"Programmer of Friday Night Funkin'",				'https://twitter.com/ninja_muffin99',	'0xFFF73838'],
-			['PhantomArcade',		'phantomarcade',	"Animator of Friday Night Funkin'",					'https://twitter.com/PhantomArcade3K',	'0xFFFFBB1B'],
-			['evilsk8r',			'evilsk8r',			"Artist of Friday Night Funkin'",					'https://twitter.com/evilsk8r',			'0xFF53E52C'],
-			['kawaisprite',			'kawaisprite',		"Composer of Friday Night Funkin'",					'https://twitter.com/kawaisprite',		'0xFF6475F3']
+			["Creators of Friday Night Funkin"],
+			['ninjamuffin99',		'ninjamuffin99',	"Programmer of Friday Night Funkin'",					'https://twitter.com/ninja_muffin99',	'F73838'],
+			['PhantomArcade',		'phantomarcade',	"Animator of Friday Night Funkin'",						'https://twitter.com/PhantomArcade3K',	'FFBB1B'],
+			['evilsk8r',			'evilsk8r',			"Artist of Friday Night Funkin'",						'https://twitter.com/evilsk8r',			'53E52C'],
+			['kawaisprite',			'kawaisprite',		"Composer of Friday Night Funkin'",						'https://twitter.com/kawaisprite',		'6475F3']
 		];
 		
 		for(i in pisspoop){
@@ -77,6 +89,7 @@ class CreditsState extends MusicBeatState
 			var optionText:Alphabet = new Alphabet(0, 70 * i, creditsStuff[i][0], !isSelectable, false);
 			optionText.isMenuItem = true;
 			optionText.screenCenter(X);
+			optionText.yAdd -= 70;
 			if(isSelectable) {
 				optionText.x -= 70;
 			}
@@ -86,6 +99,11 @@ class CreditsState extends MusicBeatState
 			grpOptions.add(optionText);
 
 			if(isSelectable) {
+				if(creditsStuff[i][5] != null)
+				{
+					Paths.currentModDirectory = creditsStuff[i][5];
+				}
+
 				var icon:AttachedSprite = new AttachedSprite('credits/' + creditsStuff[i][1]);
 				icon.xAdd = optionText.width + 10;
 				icon.sprTracker = optionText;
@@ -93,6 +111,9 @@ class CreditsState extends MusicBeatState
 				// using a FlxGroup is too much fuss!
 				iconArray.push(icon);
 				add(icon);
+				Paths.currentModDirectory = '';
+
+				if(curSelected == -1) curSelected = i;
 			}
 		}
 
@@ -102,13 +123,13 @@ class CreditsState extends MusicBeatState
 		descText.borderSize = 2.4;
 		add(descText);
 
-		bg.color = Std.parseInt(creditsStuff[curSelected][4]);
+		bg.color = getCurrentBGColor();
 		intendedColor = bg.color;
 		changeSelection();
 
 		#if mobileC
-		addVirtualPad(UP_DOWN, A_B);
-		#end
+        addVirtualPad(UP_DOWN, A_B);
+        #end
 
 		super.create();
 	}
@@ -157,7 +178,7 @@ class CreditsState extends MusicBeatState
 				curSelected = 0;
 		} while(unselectableCheck(curSelected));
 
-		var newColor:Int =  Std.parseInt(creditsStuff[curSelected][4]);
+		var newColor:Int =  getCurrentBGColor();
 		if(newColor != intendedColor) {
 			if(colorTween != null) {
 				colorTween.cancel();
@@ -185,6 +206,14 @@ class CreditsState extends MusicBeatState
 			}
 		}
 		descText.text = creditsStuff[curSelected][2];
+	}
+
+	function getCurrentBGColor() {
+		var bgColor:String = creditsStuff[curSelected][4];
+		if(!bgColor.startsWith('0x')) {
+			bgColor = '0xFF' + bgColor;
+		}
+		return Std.parseInt(bgColor);
 	}
 
 	private function unselectableCheck(num:Int):Bool {
